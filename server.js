@@ -52,12 +52,13 @@ app.post('/users',(req,res)=>{
   console.log(req.body.newData.password)
   bcrypt.hash(req.body.newData.password, saltRounds,
     (err, hash) => {
+      if (err) {res.json({success:false, message:err})} else {
       User.create({
         name:req.body.newData.name,
         email:req.body.newData.email,
         password:hash
       }, (err,data) => sendResponse(res,err,data)
-    )
+    )}
     })}
 )
 
@@ -67,16 +68,32 @@ app.route('/users/:id')
   User.findById(req.params.id,(err,data)=>{
     sendResponse(res,err,data)})
     }
+
   )
 // UPDATE
+
 .put((req,res)=>{
-  User.findByIdAndUpdate(
-    req.params.id,
-    {...req.params.newData},
-    {new:true},
-    (err, data) => {sendResponse(res,err,data)}
-  )
-})
+User.findById(req.params.id,(err,data)=>{
+  if (err) res.json({success:false,message:err}) 
+  else {
+      bcrypt.compare(req.body.newData.password, 
+        data.password,
+        (err, result) => {
+        if (result == true){
+          console.log('good result', result)
+
+
+          User.findByIdAndUpdate(
+            req.params.id,
+            {...req.params.newData},
+            {new:true},
+            (err, data) => {sendResponse(res,err,data)}
+
+
+          )
+        } else {console.log('bad result', result);sendResponse(res,err)
+      }})}})})
+      
 // DELETE
 .delete((req,res)=>{
   User.findByIdAndDelete(
