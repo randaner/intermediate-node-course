@@ -29,6 +29,22 @@ app.listen(port, ()=>{
 	console.log(`server is listening on port:${port}`)
 })
 
+function doIfPassGood(id, password, func){
+  User.findById(id,(err,data)=>{
+    if (err) res.json({success:false,message:err}) 
+    else {
+        bcrypt.compare(password, 
+          data.password,
+          (err, result) => {
+          if (result){
+            func
+          } else {console.log('bad result', err)
+
+    }
+    })}
+  }
+  )}
+
 function sendResponse(res,err,data){
   if (err){
     res.json({
@@ -47,6 +63,8 @@ function sendResponse(res,err,data){
     })
   }
 }
+
+
 // CREATE
 app.post('/users',(req,res)=>{
   console.log(req.body.newData.password)
@@ -72,28 +90,20 @@ app.route('/users/:id')
   )
 // UPDATE
 
+
 .put((req,res)=>{
-User.findById(req.params.id,(err,data)=>{
-  if (err) res.json({success:false,message:err}) 
-  else {
-      bcrypt.compare(req.body.newData.password, 
-        data.password,
-        (err, result) => {
-        if (result == true){
-          console.log('good result', result)
+  doIfPassGood(req.params.id, req.body.newData.password,
+  
+  User.findByIdAndUpdate(
+    req.params.id,
+    {...req.params.newData},
+    {new:true},
+    (err, data) => {sendResponse(res,err,data)}
+  )  
 
-
-          User.findByIdAndUpdate(
-            req.params.id,
-            {...req.params.newData},
-            {new:true},
-            (err, data) => {sendResponse(res,err,data)}
-
-
-          )
-        } else {console.log('bad result', result);sendResponse(res,err)
-      }})}})})
-      
+)
+})
+  
 // DELETE
 .delete((req,res)=>{
   User.findByIdAndDelete(
