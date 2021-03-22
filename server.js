@@ -9,6 +9,22 @@ mongoose.connect('mongodb://localhost/userData')
 
 app.use(bodyParser.json());
 
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
+const myPlaintextPassword = 's0/\/\P4$$w0rD';
+const someOtherPlaintextPassword = 'not_bacon'; 
+
+// const saltHash = (err, passoword) => {
+//   bcrypt.genSalt(saltRounds, (err,salt) => {
+//     console.log('salt', salt)
+//   bcrypt.hash(password, salt, (err,hash) => {
+//     if (err){console.log(err)} else {
+//     console.log('hash', hash)
+//     return hash
+//   }
+//   })
+// })}
+
 app.listen(port, ()=>{
 	console.log(`server is listening on port:${port}`)
 })
@@ -33,11 +49,17 @@ function sendResponse(res,err,data){
 }
 // CREATE
 app.post('/users',(req,res)=>{
-  User.create(
-    {...req.params.newData},
-    (err,data)=>{sendResponse(res,err,data)})
-
-})
+  console.log(req.body.newData.password)
+  bcrypt.hash(req.body.newData.password, saltRounds,
+    (err, hash) => {
+      User.create({
+        name:req.body.newData.name,
+        email:req.body.newData.email,
+        password:hash
+      }, (err,data) => sendResponse(res,err,data)
+    )
+    })}
+)
 
 app.route('/users/:id')
 // READ
@@ -59,6 +81,4 @@ app.route('/users/:id')
 .delete((req,res)=>{
   User.findByIdAndDelete(
     req.params.id,
-    (err,data) => {sendResponse(res,err,data)}
-  )
-})
+    (err,data) => {sendResponse(res,err,data)})})
